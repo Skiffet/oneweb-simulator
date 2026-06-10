@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(idevice_id -l)",
+      "Bash(xcrun xctrace *)"
+    ]
+  }
+}

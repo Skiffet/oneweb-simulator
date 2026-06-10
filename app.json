@@ -1,0 +1,15 @@
+{
+  "expo": {
+    "name": "OneWeb RN Simulator",
+    "slug": "oneweb-rn-simulator",
+    "version": "1.0.0",
+    "orientation": "landscape",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.anonymous.oneweb-rn-simulator"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ]
+  }
+}
