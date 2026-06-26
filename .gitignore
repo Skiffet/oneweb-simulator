@@ -1,0 +1,5 @@
+node_modules
+server/.env
+server/node_modules
+firebaseConfig.js
+supabaseConfig.js

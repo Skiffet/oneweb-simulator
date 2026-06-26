@@ -10,6 +10,7 @@ import {
   View,
 } from "react-native";
 import Svg, { Circle, Line, Path, Rect, Text as SvgText } from "react-native-svg";
+import LoginScreen from "./screens/LoginScreen";
 
 const EARTH_RADIUS = 155;
 const ORBIT_RADIUS = 270;
@@ -462,6 +463,19 @@ function useInterval(callback, delay) {
 }
 
 export default function App() {
+  const [authUser, setAuthUser] = useState(null);
+
+  if (!authUser) {
+    return <LoginScreen onLogin={(user) => setAuthUser(user)} />;
+  }
+
+  return <SimulatorApp authUser={authUser} onLogout={() => setAuthUser(null)} />;
+}
+
+const IDLE_TIMEOUT_MS = 2 * 60 * 1000;
+const IDLE_WARN_MS = 1 * 60 * 1000;
+
+function SimulatorApp({ authUser, onLogout }) {
   const [layout, setLayout] = useState(Dimensions.get("window"));
   const [running, setRunning] = useState(true);
   const [speedScale, setSpeedScale] = useState(1);
@@ -474,8 +488,15 @@ export default function App() {
   const [frame, setFrame] = useState(0);
   const [showPanel, setShowPanel] = useState(Dimensions.get("window").width >= 700);
   const [sceneSize, setSceneSize] = useState({ width: Dimensions.get("window").width, height: Dimensions.get("window").height });
+  const [idleWarning, setIdleWarning] = useState(false);
   const worldRef = useRef(buildWorld(80));
   const dragStart = useRef(null);
+  const lastActivityRef = useRef(Date.now());
+
+  const resetIdleTimer = () => {
+    lastActivityRef.current = Date.now();
+    setIdleWarning(false);
+  };
 
   const isNarrow = layout.width < 700;
 
@@ -523,6 +544,15 @@ export default function App() {
     setFrame((value) => value + 1);
   }, UPDATE_MS);
 
+  useInterval(() => {
+    const idle = Date.now() - lastActivityRef.current;
+    if (idle >= IDLE_TIMEOUT_MS) {
+      onLogout();
+    } else if (idle >= IDLE_WARN_MS) {
+      setIdleWarning(true);
+    }
+  }, 30000);
+
   const world = worldRef.current;
   const active = world.users.filter((user) => user.sessionState === "ACTIVE");
   const degraded = world.users.filter((user) => user.sessionState === "DEGRADED");
@@ -556,7 +586,15 @@ export default function App() {
   };
 
   return (
-    <SafeAreaView style={styles.root}>
+    <SafeAreaView style={styles.root} onTouchStart={resetIdleTimer}>
+      {idleWarning && (
+        <View style={styles.idleBanner}>
+          <Text style={styles.idleBannerText}>ไม่มีการใช้งาน — จะออกจากระบบอัตโนมัติใน 1 นาที</Text>
+          <Pressable onPress={resetIdleTimer} style={styles.idleBannerBtn}>
+            <Text style={styles.idleBannerBtnText}>ยังอยู่</Text>
+          </Pressable>
+        </View>
+      )}
       <View
         style={styles.scene}
         onLayout={(e) => {
@@ -731,6 +769,12 @@ export default function App() {
       >
         <Text style={styles.title}>OneWeb Core Network</Text>
         <Text style={styles.subtitle}>{TOTAL_SATELLITES} LEO satellites, {GATEWAY_SITE_COUNT} gateway sites</Text>
+
+        <View style={styles.group}>
+          <Text style={styles.groupTitle}>Account</Text>
+          <Text style={styles.accountEmail} numberOfLines={1}>{authUser.email}</Text>
+          <Button label="Logout" onPress={onLogout} />
+        </View>
 
         <View style={styles.group}>
           <Text style={styles.groupTitle}>Simulation Controls</Text>
@@ -962,5 +1006,41 @@ const styles = StyleSheet.create({
     fontSize: 7,
     fontFamily: "Courier",
     marginBottom: 2,
+  },
+  accountEmail: {
+    color: "#374151",
+    fontSize: 8,
+    fontFamily: "Courier",
+    marginBottom: 4,
+  },
+  idleBanner: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "#b45309",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    zIndex: 50,
+  },
+  idleBannerText: {
+    color: "#ffffff",
+    fontSize: 12,
+    flex: 1,
+  },
+  idleBannerBtn: {
+    backgroundColor: "#ffffff",
+    borderRadius: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    marginLeft: 10,
+  },
+  idleBannerBtnText: {
+    color: "#b45309",
+    fontSize: 12,
+    fontWeight: "700",
   },
 });
