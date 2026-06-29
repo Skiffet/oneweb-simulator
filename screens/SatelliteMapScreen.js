@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import {
   StyleSheet, Text, View, FlatList, ActivityIndicator,
   TextInput, SafeAreaView, Platform, StatusBar, TouchableOpacity,
-  Switch, Modal
+  Switch, Modal, Image
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import MapView, { Marker, Polygon, Circle, Polyline } from 'react-native-maps';
@@ -181,6 +181,7 @@ export default function SatelliteMapScreen({ onLogout }) {
       <View style={styles.headerRow}>
         <Feather name="globe" size={24} color="#334155" style={{ marginRight: 10 }} />
         <View>
+          <Text style={styles.mainTitle}>Brownien Lab;  Satellite NT telecom</Text>
           <Text style={styles.mainTitle}>SATELLITES OVER TH</Text>
           <Text style={styles.subTitle}>PYTHON REAL-TIME MAP SIMULATION</Text>
         </View>
@@ -296,9 +297,18 @@ export default function SatelliteMapScreen({ onLogout }) {
         )}
       </View>
 
-      <TouchableOpacity style={styles.menuButton} onPress={() => setIsMenuOpen(true)}>
-        <Feather name="menu" size={28} color="#334155" />
-      </TouchableOpacity>
+      <View style={styles.topBar}>
+        <TouchableOpacity style={styles.menuButtonInBar} onPress={() => setIsMenuOpen(true)}>
+          <Feather name="menu" size={24} color="#334155" />
+        </TouchableOpacity>
+        <Text style={styles.topBarTitle}>Brownien Lab </Text>
+        <Image
+          source={require('../images/nt.png')}
+          style={styles.topBarLogo}
+          resizeMode="contain"
+        />
+        <Text style={styles.topBarTitle}> Satellite NT telecom</Text>
+      </View>
 
       <Modal visible={isMenuOpen} animationType="slide" transparent={true} onRequestClose={() => setIsMenuOpen(false)}>
         <View style={styles.modalOverlay}>
@@ -372,6 +382,38 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   loadingText: { marginTop: 12, color: '#64748b', fontSize: 13, fontWeight: '500' },
+  topBar: {
+    position: 'absolute',
+    top: Platform.OS === 'android' ? (StatusBar.currentHeight || 20) : 44,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  menuButtonInBar: {
+    padding: 6,
+    marginRight: 10,
+  },
+  topBarLogo: {
+    width: 36,
+    height: 36,
+    borderRadius: 6,
+    marginRight: 8,
+  },
+  topBarTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1e293b',
+    letterSpacing: 0.5,
+  },
   menuButton: {
     position: 'absolute',
     top: Platform.OS === 'android' ? (StatusBar.currentHeight || 20) + 16 : 56,

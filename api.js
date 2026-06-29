@@ -1,5 +1,5 @@
-export const API_URL = "http://122.155.209.87";
-export const SAT_API_URL = "http://122.155.209.87";
+export const API_URL = "http://192.168.100.219:3000";
+export const SAT_API_URL = "http://192.168.100.219:5000";
 
 export async function apiPost(path, body) {
   const res = await fetch(`${API_URL}${path}`, {
