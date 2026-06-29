@@ -1,0 +1,311 @@
+bg fetch thread started
+calling fetch_tle_data
+fetch_tle_data returned 15821 items
+Updated satellite_objects_cache with 0 items
+bg fetch thread started
+calling fetch_tle_data
+fetch_tle_data returned 0 items
+bg fetch thread started
+calling fetch_tle_data
+fetch_tle_data returned 5100 items
+Updated satellite_objects_cache with 5100 items
+bg fetch thread started
+calling fetch_tle_data
+fetch_tle_data returned 5100 items
+Updated satellite_objects_cache with 5100 items
+bg fetch thread started
+calling fetch_tle_data
+fetch_tle_data returned 5100 items
+Updated satellite_objects_cache with 5100 items
+bg fetch thread started
+calling fetch_tle_data
+bg fetch thread started
+calling fetch_tle_data
+fetch_tle_data returned 31758 items
+Updated satellite_objects_cache with 31758 items
+fetch_tle_data returned 31758 items
+Updated satellite_objects_cache with 31758 items
+bg fetch thread started
+calling fetch_tle_data
+fetch_tle_data returned 31758 items
+Updated satellite_objects_cache with 31758 items
+bg fetch thread started
+calling fetch_tle_data
+bg fetch thread started
+calling fetch_tle_data
+fetch_tle_data returned 31758 items
+Updated satellite_objects_cache with 31758 items
+fetch_tle_data returned 31758 items
+Updated satellite_objects_cache with 31758 items
+bg fetch thread started
+calling fetch_tle_data
+fetch_tle_data returned 31757 items
+Updated satellite_objects_cache with 31757 items
+calling fetch_tle_data
+fetch_tle_data returned 31757 items
+Updated satellite_objects_cache with 31757 items
+bg fetch thread started
+calling fetch_tle_data
+fetch_tle_data returned 31757 items
+Updated satellite_objects_cache with 31757 items
+calling fetch_tle_data
+fetch_tle_data returned 31757 items
+Updated satellite_objects_cache with 31757 items
+calling fetch_tle_data
+fetch_tle_data returned 31757 items
+Updated satellite_objects_cache with 31757 items
+calling fetch_tle_data
+fetch_tle_data returned 31757 items
+Updated satellite_objects_cache with 31757 items
+calling fetch_tle_data
+fetch_tle_data returned 31757 items
+Updated satellite_objects_cache with 31757 items
+calling fetch_tle_data
+fetch_tle_data returned 31757 items
+Updated satellite_objects_cache with 31757 items
+calling fetch_tle_data
+fetch_tle_data returned 31757 items
+Updated satellite_objects_cache with 31757 items
+calling fetch_tle_data
+fetch_tle_data returned 31757 items
+Updated satellite_objects_cache with 31757 items
+calling fetch_tle_data
+fetch_tle_data returned 31757 items
+Updated satellite_objects_cache with 31757 items
+calling fetch_tle_data
+fetch_tle_data returned 31756 items
+Updated satellite_objects_cache with 31756 items
+calling fetch_tle_data
+fetch_tle_data returned 31756 items
+Updated satellite_objects_cache with 31756 items
+bg fetch thread started
+calling fetch_tle_data
+fetch_tle_data returned 31756 items
+Updated satellite_objects_cache with 31756 items
+bg fetch thread started
+calling fetch_tle_data
+fetch_tle_data returned 31756 items
+Updated satellite_objects_cache with 31756 items
+bg fetch thread started
+calling fetch_tle_data
+fetch_tle_data returned 31756 items
+Updated satellite_objects_cache with 31756 items
+calling fetch_tle_data
+fetch_tle_data returned 31756 items
+Updated satellite_objects_cache with 31756 items
+calling fetch_tle_data
+fetch_tle_data returned 31756 items
+Updated satellite_objects_cache with 31756 items
+calling fetch_tle_data
+fetch_tle_data returned 31756 items
+Updated satellite_objects_cache with 31756 items
+calling fetch_tle_data
+fetch_tle_data returned 31756 items
+Updated satellite_objects_cache with 31756 items
+calling fetch_tle_data
+fetch_tle_data returned 31817 items
+Updated satellite_objects_cache with 31817 items
+calling fetch_tle_data
+fetch_tle_data returned 31817 items
+Updated satellite_objects_cache with 31817 items
+calling fetch_tle_data
+fetch_tle_data returned 31817 items
+Updated satellite_objects_cache with 31817 items
+calling fetch_tle_data
+fetch_tle_data returned 31817 items
+Updated satellite_objects_cache with 31817 items
+calling fetch_tle_data
+fetch_tle_data returned 31817 items
+Updated satellite_objects_cache with 31817 items
+calling fetch_tle_data
+fetch_tle_data returned 31817 items
+Updated satellite_objects_cache with 31817 items
+calling fetch_tle_data
+fetch_tle_data returned 31817 items
+Updated satellite_objects_cache with 31817 items
+calling fetch_tle_data
+fetch_tle_data returned 31817 items
+Updated satellite_objects_cache with 31817 items
+bg fetch thread started
+calling fetch_tle_data
+bg fetch thread started
+calling fetch_tle_data
+fetch_tle_data returned 31817 items
+fetch_tle_data returned 31817 items
+Updated satellite_objects_cache with 31817 items
+Updated satellite_objects_cache with 31817 items
+bg fetch thread started
+calling fetch_tle_data
+bg fetch thread started
+calling fetch_tle_data
+fetch_tle_data returned 31817 items
+Updated satellite_objects_cache with 31817 items
+fetch_tle_data returned 31817 items
+Updated satellite_objects_cache with 31817 items
+calling fetch_tle_data
+calling fetch_tle_data
+Background fetch error: HTTPSConnectionPool(host='www.space-track.org', port=443): Max retries exceeded with url: /basicspacedata/query/class/gp/EPOCH/%3Enow-30/orderby/NORAD_CAT_ID/format/json (Caused by NameResolutionError("<urllib3.connection.HTTPSConnection object at 0x00000224E4E04F50>: Failed to resolve 'www.space-track.org' ([Errno 11001] getaddrinfo failed)"))
+Background fetch error: HTTPSConnectionPool(host='www.space-track.org', port=443): Max retries exceeded with url: /basicspacedata/query/class/gp/EPOCH/%3Enow-30/orderby/NORAD_CAT_ID/format/json (Caused by NameResolutionError("<urllib3.connection.HTTPSConnection object at 0x000001753EBF3950>: Failed to resolve 'www.space-track.org' ([Errno 11001] getaddrinfo failed)"))
+bg fetch thread started
+calling fetch_tle_data
+bg fetch thread started
+calling fetch_tle_data
+fetch_tle_data returned 31824 items
+Updated satellite_objects_cache with 31824 items
+fetch_tle_data returned 31824 items
+Updated satellite_objects_cache with 31824 items
+calling fetch_tle_data
+calling fetch_tle_data
+fetch_tle_data returned 31824 items
+Updated satellite_objects_cache with 31824 items
+fetch_tle_data returned 31824 items
+Updated satellite_objects_cache with 31824 items
+bg fetch thread started
+calling fetch_tle_data
+bg fetch thread started
+calling fetch_tle_data
+fetch_tle_data returned 31824 items
+fetch_tle_data returned 31824 items
+Updated satellite_objects_cache with 31824 items
+bg fetch thread started
+calling fetch_tle_data
+bg fetch thread started
+calling fetch_tle_data
+fetch_tle_data returned 31824 items
+fetch_tle_data returned 31824 items
+Updated satellite_objects_cache with 31824 items
+Updated satellite_objects_cache with 31824 items
+calling fetch_tle_data
+calling fetch_tle_data
+fetch_tle_data returned 31822 items
+fetch_tle_data returned 31822 items
+Updated satellite_objects_cache with 31822 items
+Updated satellite_objects_cache with 31822 items
+calling fetch_tle_data
+calling fetch_tle_data
+fetch_tle_data returned 31822 items
+Updated satellite_objects_cache with 31822 items
+fetch_tle_data returned 31822 items
+Updated satellite_objects_cache with 31822 items
+calling fetch_tle_data
+calling fetch_tle_data
+fetch_tle_data returned 31822 items
+Updated satellite_objects_cache with 31822 items
+fetch_tle_data returned 31822 items
+Updated satellite_objects_cache with 31822 items
+calling fetch_tle_data
+calling fetch_tle_data
+fetch_tle_data returned 31822 items
+Updated satellite_objects_cache with 31822 items
+fetch_tle_data returned 31822 items
+Updated satellite_objects_cache with 31822 items
+calling fetch_tle_data
+calling fetch_tle_data
+fetch_tle_data returned 31822 items
+fetch_tle_data returned 31822 items
+Updated satellite_objects_cache with 31822 items
+Updated satellite_objects_cache with 31822 items
+calling fetch_tle_data
+calling fetch_tle_data
+fetch_tle_data returned 31822 items
+Updated satellite_objects_cache with 31822 items
+fetch_tle_data returned 31822 items
+Updated satellite_objects_cache with 31822 items
+calling fetch_tle_data
+calling fetch_tle_data
+fetch_tle_data returned 31822 items
+fetch_tle_data returned 31822 items
+Updated satellite_objects_cache with 31822 items
+Updated satellite_objects_cache with 31822 items
+calling fetch_tle_data
+calling fetch_tle_data
+fetch_tle_data returned 31822 items
+Updated satellite_objects_cache with 31822 items
+fetch_tle_data returned 31822 items
+Updated satellite_objects_cache with 31822 items
+calling fetch_tle_data
+calling fetch_tle_data
+fetch_tle_data returned 31822 items
+Updated satellite_objects_cache with 31822 items
+fetch_tle_data returned 31822 items
+Updated satellite_objects_cache with 31822 items
+calling fetch_tle_data
+calling fetch_tle_data
+fetch_tle_data returned 31822 items
+Updated satellite_objects_cache with 31822 items
+fetch_tle_data returned 31822 items
+Updated satellite_objects_cache with 31822 items
+calling fetch_tle_data
+calling fetch_tle_data
+fetch_tle_data returned 31822 items
+fetch_tle_data returned 31822 items
+Updated satellite_objects_cache with 31822 items
+Updated satellite_objects_cache with 31822 items
+calling fetch_tle_data
+calling fetch_tle_data
+fetch_tle_data returned 31822 items
+fetch_tle_data returned 31822 items
+Updated satellite_objects_cache with 31822 items
+Updated satellite_objects_cache with 31822 items
+calling fetch_tle_data
+calling fetch_tle_data
+fetch_tle_data returned 31822 items
+fetch_tle_data returned 31822 items
+Updated satellite_objects_cache with 31822 items
+Updated satellite_objects_cache with 31822 items
+calling fetch_tle_data
+calling fetch_tle_data
+fetch_tle_data returned 31822 items
+Updated satellite_objects_cache with 31822 items
+fetch_tle_data returned 31822 items
+Updated satellite_objects_cache with 31822 items
+calling fetch_tle_data
+calling fetch_tle_data
+fetch_tle_data returned 31822 items
+Updated satellite_objects_cache with 31822 items
+fetch_tle_data returned 31822 items
+Updated satellite_objects_cache with 31822 items
+calling fetch_tle_data
+calling fetch_tle_data
+fetch_tle_data returned 31822 items
+Updated satellite_objects_cache with 31822 items
+fetch_tle_data returned 31822 items
+Updated satellite_objects_cache with 31822 items
+calling fetch_tle_data
+calling fetch_tle_data
+fetch_tle_data returned 31822 items
+fetch_tle_data returned 31822 items
+Updated satellite_objects_cache with 31822 items
+Updated satellite_objects_cache with 31822 items
+calling fetch_tle_data
+calling fetch_tle_data
+fetch_tle_data returned 31822 items
+fetch_tle_data returned 31822 items
+Updated satellite_objects_cache with 31822 items
+Updated satellite_objects_cache with 31822 items
+calling fetch_tle_data
+calling fetch_tle_data
+fetch_tle_data returned 31822 items
+fetch_tle_data returned 31822 items
+Updated satellite_objects_cache with 31822 items
+Updated satellite_objects_cache with 31822 items
+calling fetch_tle_data
+calling fetch_tle_data
+fetch_tle_data returned 31822 items
+Updated satellite_objects_cache with 31822 items
+fetch_tle_data returned 31822 items
+Updated satellite_objects_cache with 31822 items
+calling fetch_tle_data
+calling fetch_tle_data
+fetch_tle_data returned 31822 items
+Updated satellite_objects_cache with 31822 items
+fetch_tle_data returned 31822 items
+Updated satellite_objects_cache with 31822 items
+calling fetch_tle_data
+calling fetch_tle_data
+fetch_tle_data returned 31822 items
+Updated satellite_objects_cache with 31822 items
+fetch_tle_data returned 31822 items
+Updated satellite_objects_cache with 31822 items
+bg fetch thread started
+calling fetch_tle_data

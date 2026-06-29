@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Satellites over Thailand - Python Simulation</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    
+    <style>
+        body {
+            background-color: #f8fafc;
+            color: #0f172a;
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* Prevent body scroll */
+        }
+        #map {
+            height: 100vh;
+            width: 100%;
+            z-index: 1;
+        }
+        .dashboard-overlay {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 450px;
+            max-height: calc(100vh - 40px);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .sat-card {
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .sat-card:hover {
+            background-color: #f1f5f9;
+            border-color: #cbd5e1;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        
+        /* Modal Styles */
+        #modal-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        /* Leaflet custom marker */
+        .leaflet-marker-icon {
+            transition: transform 5s linear !important;
+        }
+        .sat-icon {
+            background: #ef4444;
+            border: 2px solid white;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.8);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        
+        .oneweb-icon {
+            background: #3b82f6;
+            border: 2px solid white;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.8);
+            animation: pulse-blue 2s infinite;
+        }
+        @keyframes pulse-blue {
+            0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Full Screen Map -->
+    <div id="map"></div>
+
+    <!-- Floating Dashboard -->
+    <div class="dashboard-overlay">
+        <div class="p-6 border-b border-slate-200 bg-white">
+            <h1 class="text-2xl font-light tracking-tight text-slate-900 uppercase flex items-center gap-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-800"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+                Satellites Over TH
+            </h1>
+            <p class="text-xs font-mono text-slate-500 uppercase mt-1 tracking-widest">
+                Python Real-time Map Simulation
+            </p>
+        </div>
+        <div class="p-5 flex-1 overflow-y-auto min-h-0 custom-scrollbar">
+            <div class="flex justify-between items-end border-b border-slate-200 pb-4">
+                <div>
+                    <h2 class="text-4xl font-light text-slate-800" id="total-count">...</h2>
+                    <p class="text-xs font-mono text-slate-500 uppercase tracking-widest mt-1">Active Objects</p>
+                </div>
+                <div class="text-right">
+                    <div class="flex items-center gap-1 justify-end text-emerald-600 font-mono text-xs mb-1">
+                        <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                        LIVE
+                    </div>
+                    <div class="text-xs font-mono text-slate-400" id="last-update">...</div>
+                </div>
+            </div>
+
+            <div class="mt-4 flex gap-2">
+                <select id="type-filter" class="flex-1 bg-slate-50 border border-slate-200 text-slate-800 text-xs rounded px-2 py-2 font-mono uppercase focus:outline-none focus:ring-2 focus:ring-slate-300">
+                    <option value="ALL">ALL TYPES</option>
+                </select>
+                <input type="text" id="search-input" placeholder="Search ID/Name" class="flex-1 bg-slate-50 border border-slate-200 text-slate-800 text-xs rounded px-2 py-2 font-mono focus:outline-none focus:ring-2 focus:ring-slate-300">
+            </div>
+
+            <div class="mt-3 flex flex-col gap-2">
+                <div class="flex items-center justify-between bg-slate-50 p-2 rounded border border-slate-200">
+                    <span class="text-[10px] font-mono text-slate-600 uppercase tracking-widest">Show Adjacent OneWeb Planes</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="oneweb-toggle" class="sr-only peer">
+                        <div class="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-500"></div>
+                    </label>
+                </div>
+                <div class="flex items-center justify-between bg-blue-50 p-2 rounded border border-blue-200">
+                    <span class="text-[10px] font-mono text-blue-700 uppercase tracking-widest flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-500"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                        Show OneWeb Distances
+                    </span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="oneweb-distance-toggle" class="sr-only peer">
+                        <div class="w-9 h-5 bg-blue-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                    </label>
+                </div>
+                <div class="flex items-center justify-between bg-purple-50 p-2 rounded border border-purple-200 mt-2">
+                    <span class="text-[10px] font-mono text-purple-700 uppercase tracking-widest flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-purple-500"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg>
+                        Coverage Box (1600x1024)
+                    </span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="coverage-box-toggle" class="sr-only peer">
+                        <div class="w-9 h-5 bg-purple-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-purple-600"></div>
+                    </label>
+                </div>
+                <div class="flex items-center justify-between bg-pink-50 p-2 rounded border border-pink-200 mt-2">
+                    <span class="text-[10px] font-mono text-pink-700 uppercase tracking-widest flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-pink-500"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line></svg>
+                        Coverage Strips (16 Beams)
+                    </span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="oneweb-strips-toggle" class="sr-only peer">
+                        <div class="w-9 h-5 bg-pink-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-pink-600"></div>
+                    </label>
+                </div>
+                <div class="flex items-center justify-between bg-yellow-50 p-2 rounded border border-yellow-200 mt-2">
+                    <span class="text-[10px] font-mono text-yellow-700 uppercase tracking-widest flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-yellow-500"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+                        Max Service Area (1368km)
+                    </span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="oneweb-max-area-toggle" class="sr-only peer">
+                        <div class="w-9 h-5 bg-yellow-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-yellow-600"></div>
+                    </label>
+                </div>
+                <div class="flex items-center justify-between bg-rose-50 p-2 rounded border border-rose-200 mt-2">
+                    <span class="text-[10px] font-mono text-rose-700 uppercase tracking-widest flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-rose-500"><path d="M12 2v20"></path><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                        Progressive Pitch & GSO Protection
+                    </span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="oneweb-pitch-toggle" class="sr-only peer">
+                        <div class="w-9 h-5 bg-rose-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-rose-600"></div>
+                    </label>
+                </div>
+                <div class="flex items-center justify-between bg-emerald-50 p-2 rounded border border-emerald-200 mt-2">
+                    <span class="text-[10px] font-mono text-emerald-700 uppercase tracking-widest flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-emerald-500"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        OneWeb Entry Time
+                    </span>
+                    <button onclick="openPredictionsModal()" class="bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-bold py-1 px-3 rounded font-mono transition shadow-sm">CHECK TIME</button>
+                </div>
+            </div>
+
+            <div id="sat-list" class="mt-4 flex flex-col gap-3">
+                <!-- Cards injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Satellite Detail Modal -->
+    <div id="modal-backdrop" onclick="closeModal()">
+        <div class="bg-white rounded-lg shadow-2xl w-[450px] max-w-[90%] overflow-hidden flex flex-col max-h-[90vh]" onclick="event.stopPropagation()">
+            <div class="bg-slate-900 px-5 py-4 flex justify-between items-center">
+                <h3 class="text-white font-medium text-lg tracking-wide uppercase" id="modal-title">Satellite Detail</h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-white transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div class="p-5 overflow-y-auto" id="modal-content">
+                <!-- Injected via JS -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Organization helper
+        const getOrganization = (name, countryCode) => {
+            if (!name) return "Others";
+            const n = name.toUpperCase();
+            if (n.includes("STARLINK")) return "SpaceX (Starlink)";
+            if (n.includes("ONEWEB")) return "OneWeb";
+            if (n.includes("IRIDIUM")) return "Iridium";
+            if (n.includes("FLOCK")) return "Planet Labs";
+            if (n.includes("LEMUR")) return "Spire Global";
+            if (n.includes("GLOBALSTAR")) return "Globalstar";
+            if (n.includes("O3B")) return "SES (O3b)";
+            if (n.includes("GALILEO")) return "ESA (Galileo)";
+            if (n.includes("BEIDOU")) return "CNSA (BeiDou)";
+            if (n.includes("GLONASS")) return "Roscosmos (GLONASS)";
+            if (n.includes("THAICOM") || n.includes("THEOS")) return "Thailand";
+            
+            if (countryCode === "US") return "USA (Misc)";
+            if (countryCode === "PRC") return "China (Misc)";
+            if (countryCode === "CIS") return "Russia (Misc)";
+            if (countryCode === "UK") return "UK (Misc)";
+            if (countryCode === "FR") return "France (Misc)";
+            if (countryCode === "ESA") return "ESA (Misc)";
+            if (countryCode === "JPN") return "Japan (Misc)";
+            if (countryCode === "IND") return "India (Misc)";
+            return "Others";
+        };
+
+        const getOrbitClass = (apogee, perigee, alt) => {
+            const high = apogee || alt || 0;
+            const low = perigee || alt || 0;
+            if (high <= 2000) return "LEO";
+            if (low >= 35000 && high <= 36500) return "GEO";
+            if (low > 2000 && high < 35000) return "MEO";
+            if (high > 35000 && low < 35000) return "HEO (Elliptical)";
+            if (high > 36500) return "HEO";
+            return "UNKNOWN";
+        };
+
+        // Initialize Map
+        const map = L.map('map', {
+            zoomControl: false // move to bottom left
+        }).setView([13.7563, 100.5018], 5); // Center on Bangkok
+
+        L.control.zoom({ position: 'bottomleft' }).addTo(map);
+
+        // Add Dark/Light minimalist tile layer (CartoDB Positron)
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap &copy; CARTO',
+            subdomains: 'abcd',
+            maxZoom: 19
+        }).addTo(map);
+
+        // State
+        let satellites = [];
+        let markers = {};
+        let currentPathLayer = null;
+        let distanceLinesLayer = L.layerGroup().addTo(map);
+        let coverageBoxLayer = L.layerGroup().addTo(map);
+        let coverageStripsLayer = L.layerGroup().addTo(map);
+        let maxServiceAreaLayer = L.layerGroup().addTo(map);
+        
+        // Custom icon
+        const satIcon = L.divIcon({
+            className: 'sat-icon',
+            iconSize: [12, 12]
+        });
+
+        const onewebIcon = L.divIcon({
+            className: 'oneweb-icon',
+            iconSize: [12, 12]
+        });
+
+        const fetchSatellites = async () => {
+            try {
+                const showOneweb = document.getElementById('oneweb-toggle').checked;
+                const res = await fetch(`/api/satellites?oneweb_planes=${showOneweb}`);
+                const data = await res.json();
+                
+                if (data.success) {
+                    satellites = data.satellites;
+                    document.getElementById('total-count').innerText = data.count;
+                    document.getElementById('last-update').innerText = new Date(data.timestamp).toLocaleTimeString('th-TH');
+                    
+                    updateFilters();
+                    renderUI();
+                    updateMap();
+                }
+            } catch (err) {
+                console.error("Failed to fetch satellites", err);
+                document.getElementById('sat-list').innerHTML = `<div class="text-center p-4 text-red-500 font-mono text-xs uppercase">Connection Error</div>`;
+            }
+        };
+
+        const updateFilters = () => {
+            const select = document.getElementById('type-filter');
+            const currentVal = select.value;
+            const types = new Set(satellites.map(s => s.objectType || "UNKNOWN"));
+            
+            let opts = `<option value="ALL">ALL TYPES</option>`;
+            Array.from(types).sort().forEach(t => {
+                opts += `<option value="${t}">${t}</option>`;
+            });
+            select.innerHTML = opts;
+            select.value = currentVal || "ALL"; // Restore selection
+        };
+
+        const getFilteredSatellites = () => {
+            const typeFilter = document.getElementById('type-filter').value;
+            const searchStr = document.getElementById('search-input').value.toLowerCase();
+            
+            return satellites.filter(sat => {
+                const matchType = typeFilter === "ALL" || (sat.objectType || "UNKNOWN") === typeFilter;
+                const matchSearch = sat.name.toLowerCase().includes(searchStr) || String(sat.noradId).includes(searchStr);
+                return matchType && matchSearch;
+            });
+        };
+
+        const renderUI = () => {
+            const list = document.getElementById('sat-list');
+            const scrollContainer = list.parentElement;
+            const currentScroll = scrollContainer.scrollTop;
+
+            const filtered = getFilteredSatellites();
+            
+            if (filtered.length === 0) {
+                list.innerHTML = `<div class="text-center p-8 text-slate-500 font-mono text-sm uppercase bg-white rounded border border-slate-200 shadow-sm">No objects found.</div>`;
+                return;
+            }
+
+            let html = '';
+            const displayList = filtered.slice(0, 100);
+            displayList.forEach((sat, i) => {
+                html += `
+                <div class="sat-card rounded p-4" onclick='focusSatellite(${JSON.stringify(sat).replace(/'/g, "&#39;")})'>
+                    <div class="flex justify-between items-start mb-3">
+                        <h4 class="font-medium text-sm text-slate-800 truncate pr-2 uppercase tracking-wide" title="${sat.name}">
+                            ${sat.name}
+                        </h4>
+                        <div class="flex gap-1 items-center">
+                            ${sat.isAdjacent 
+                                ? '<span class="text-[8px] font-mono bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded border border-slate-200">NEARBY</span>'
+                                : '<span class="text-[8px] font-mono bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded border border-emerald-200 font-bold">TH AIRSPACE</span>'
+                            }
+                            <span class="text-[9px] font-mono bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded border border-slate-200">
+                                ID:${sat.noradId}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="flex gap-2 mb-2 flex-wrap">
+                        <span class="text-[9px] font-mono bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded-sm border border-blue-200">
+                            ORG: ${getOrganization(sat.name, sat.countryCode)}
+                        </span>
+                        <span class="text-[9px] font-mono bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-sm border border-slate-200">
+                            TYPE: ${sat.objectType || "UNKNOWN"}
+                        </span>
+                    </div>
+                    <div class="text-[10px] text-slate-500 font-mono uppercase tracking-wider flex justify-between">
+                        <span>ALT: ${Math.round(sat.alt)} km</span>
+                        <span>V: ${Math.round(sat.velocityKms)} km/s</span>
+                    </div>
+                </div>
+                `;
+            });
+            
+            if (filtered.length > 100) {
+                html += `<div class="text-center py-3 text-slate-400 font-mono text-[10px] uppercase border border-dashed border-slate-200 rounded bg-slate-50 shadow-sm">+ ${filtered.length - 100} more objects hidden to maximize browser performance. Use the map to explore.</div>`;
+            }
+            
+            list.innerHTML = html;
+
+            requestAnimationFrame(() => {
+                scrollContainer.scrollTop = currentScroll;
+            });
+        };
+
+        const focusSatellite = (sat) => {
+            const id = String(sat.noradId);
+            const pos = [sat.lat, sat.lon];
+            
+            // Fly to the coordinates smoothly
+            map.flyTo(pos, 7, { animate: true, duration: 1.5 });
+            
+            // Open the popup if the marker exists
+            if (markers[id]) {
+                setTimeout(() => {
+                    markers[id].openPopup();
+                }, 1000); // slight delay to let the map fly first
+            }
+        };
+
+        const updateMap = () => {
+            const filtered = getFilteredSatellites();
+            
+            // Remove markers not in filtered list
+            const currentIds = filtered.map(s => String(s.noradId));
+            Object.keys(markers).forEach(id => {
+                if (!currentIds.includes(id)) {
+                    map.removeLayer(markers[id]);
+                    delete markers[id];
+                }
+            });
+
+            // Add or update markers
+            filtered.forEach(sat => {
+                const id = String(sat.noradId);
+                const pos = [sat.lat, sat.lon];
+                
+                const popupContent = `
+                    <div class="text-sm font-sans" style="min-width: 180px;">
+                        <h4 class="font-bold text-slate-800 border-b border-slate-200 pb-1 mb-2">${sat.name}</h4>
+                        <div class="flex flex-col gap-1 text-xs text-slate-600 font-mono mb-3">
+                            <div class="flex justify-between"><span>ID:</span> <span>${sat.noradId}</span></div>
+                            <div class="flex justify-between"><span>ALT:</span> <span>${Math.round(sat.alt)} km</span></div>
+                            <div class="flex justify-between"><span>VEL:</span> <span>${sat.velocityKms.toFixed(2)} km/s</span></div>
+                            <div class="flex justify-between"><span>TYPE:</span> <span>${sat.objectType || 'UNK'}</span></div>
+                        </div>
+                        <button onclick='openModalById("${id}")' class="w-full bg-slate-800 text-white rounded py-1 text-xs uppercase tracking-wider hover:bg-slate-700 transition">
+                            More Details
+                        </button>
+                    </div>
+                `;
+
+                const iconToUse = sat.isAdjacent ? onewebIcon : satIcon;
+
+                if (markers[id]) {
+                    markers[id].setLatLng(pos);
+                    markers[id].setIcon(iconToUse);
+                    // Update popup content silently if it's open
+                    if (markers[id].getPopup()) {
+                        markers[id].getPopup().setContent(popupContent);
+                    }
+                } else {
+                    const m = L.marker(pos, { icon: iconToUse }).addTo(map);
+                    
+                    let tooltipStatus = "";
+                    if (sat.name.includes("ONEWEB")) {
+                        const showPitch = document.getElementById('oneweb-pitch-toggle') && document.getElementById('oneweb-pitch-toggle').checked;
+                        if (showPitch && sat.isTurnedOff) {
+                            tooltipStatus = "<br/><span class='text-rose-600 font-bold'>MUTED (GSO PROTECTION)</span>";
+                        } else if (showPitch && sat.pitchOffsetKm !== 0) {
+                            tooltipStatus = `<br/><span class='text-orange-600 font-bold'>PITCHED (OFFSET ${Math.round(sat.pitchOffsetKm)} KM)</span>`;
+                        }
+                    }
+
+                    m.bindPopup(popupContent, { className: 'custom-popup' });
+                    m.bindTooltip(sat.name + tooltipStatus, { direction: 'top', offset: [0, -10] });
+                    markers[id] = m;
+                }
+            });
+            
+            // Coverage Box Logic
+            coverageBoxLayer.clearLayers();
+            const showCoverage = document.getElementById('coverage-box-toggle') && document.getElementById('coverage-box-toggle').checked;
+            if (showCoverage) {
+                const colors = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#84cc16', '#06b6d4', '#6366f1', '#d946ef'];
+                let colorIndex = 0;
+                
+                filtered.forEach(sat => {
+                    const color = colors[colorIndex % colors.length];
+                    colorIndex++;
+                    
+                    if (sat.footprint) {
+                        const polygon = L.polygon(sat.footprint, {
+                            color: color,
+                            weight: 2,
+                            fillOpacity: 0.05,
+                            fillColor: color
+                        }).addTo(coverageBoxLayer);
+                        
+                        let elevMeters = Math.round(sat.localElevKm * 1000);
+                        let elevString = elevMeters === 0 ? "Sea Level (0 m)" : (elevMeters > 0 ? `Above Sea Level (+${elevMeters} m)` : `Below Sea Level (${elevMeters} m)`);
+                        
+                        const tooltipHtml = `<div class="text-[10px] font-mono text-slate-800">
+                            <b>RF Footprint Math (WGS84)</b><br/>
+                            Terrain: <b class="${elevMeters > 0 ? 'text-emerald-600' : (elevMeters < 0 ? 'text-blue-600' : 'text-slate-600')}">${elevString}</b><br/>
+                            True W: ${sat.trueWidthKm.toFixed(1)} km<br/>
+                            True H: ${sat.trueHeightKm.toFixed(1)} km
+                        </div>`;
+                        polygon.bindTooltip(tooltipHtml, {direction: 'center', className: 'bg-white/90 border border-slate-200 shadow-sm'});
+                    }
+                });
+            }
+
+            // Coverage Strips Logic
+            coverageStripsLayer.clearLayers();
+            const showStrips = document.getElementById('oneweb-strips-toggle') && document.getElementById('oneweb-strips-toggle').checked;
+            if (showStrips) {
+                const colors = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#84cc16', '#06b6d4', '#6366f1', '#d946ef'];
+                let colorIndex = 0;
+                
+                filtered.forEach(sat => {
+                    if (sat.name.includes("ONEWEB") && sat.strips_polygon && sat.strips_polygon.length > 0) {
+                        const color = colors[colorIndex % colors.length];
+                        colorIndex++;
+                        
+                        const showPitch = document.getElementById('oneweb-pitch-toggle') && document.getElementById('oneweb-pitch-toggle').checked;
+                        const isMuted = showPitch && sat.isTurnedOff;
+
+                        sat.strips_polygon.forEach(strip => {
+                            L.polygon(strip, {
+                                color: isMuted ? '#94a3b8' : color,
+                                weight: 2,
+                                dashArray: isMuted ? '4,4' : '',
+                                opacity: isMuted ? 0.6 : 1.0,
+                                fill: false
+                            }).addTo(coverageStripsLayer);
+                        });
+                    }
+                });
+            }
+
+            // Max Service Area Logic
+            maxServiceAreaLayer.clearLayers();
+            const showMaxArea = document.getElementById('oneweb-max-area-toggle') && document.getElementById('oneweb-max-area-toggle').checked;
+            if (showMaxArea) {
+                filtered.forEach(sat => {
+                    if (sat.name.includes("ONEWEB")) {
+                        L.circle([sat.lat, sat.lon], {
+                            radius: 684000,
+                            color: '#eab308',
+                            weight: 1,
+                            dashArray: '5,5',
+                            fillColor: '#eab308',
+                            fillOpacity: 0.05
+                        }).addTo(maxServiceAreaLayer);
+                    }
+                });
+            }
+
+            // True 3D Euclidean distance (through space, accounting for altitude)
+            const getSatelliteDistance3D = (sat1, sat2) => {
+                const R_earth = 6371;
+                const alt1 = sat1.alt || 1200;
+                const alt2 = sat2.alt || 1200;
+                const R1 = R_earth + alt1;
+                const R2 = R_earth + alt2;
+                const lat1 = sat1.lat * Math.PI / 180;
+                const lon1 = sat1.lon * Math.PI / 180;
+                const lat2 = sat2.lat * Math.PI / 180;
+                const lon2 = sat2.lon * Math.PI / 180;
+                const x1 = R1 * Math.cos(lat1) * Math.cos(lon1);
+                const y1 = R1 * Math.cos(lat1) * Math.sin(lon1);
+                const z1 = R1 * Math.sin(lat1);
+                const x2 = R2 * Math.cos(lat2) * Math.cos(lon2);
+                const y2 = R2 * Math.cos(lat2) * Math.sin(lon2);
+                const z2 = R2 * Math.sin(lat2);
+                return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2) + Math.pow(z2 - z1, 2));
+            };
+
+            // OneWeb Distance Mesh Logic
+            distanceLinesLayer.clearLayers();
+            const showDistances = document.getElementById('oneweb-distance-toggle') && document.getElementById('oneweb-distance-toggle').checked;
+            if (showDistances) {
+                const onewebs = filtered.filter(s => s.name.toUpperCase().includes("ONEWEB"));
+                const drawnPairs = new Set();
+                const connectionCount = {}; // Track number of connections per satellite
+
+                onewebs.forEach(satA => {
+                    let nearestN = null, distN = Infinity;
+                    let nearestS = null, distS = Infinity;
+                    let nearestE = null, distE = Infinity;
+                    let nearestW = null, distW = Infinity;
+
+                    onewebs.forEach(satB => {
+                        if (satA.noradId === satB.noradId) return;
+                        
+                        const dLat = satB.lat - satA.lat;
+                        let dLon = satB.lon - satA.lon;
+                        
+                        // Normalize dLon for antimeridian crossing (Pacific Ocean)
+                        if (dLon > 180) dLon -= 360;
+                        if (dLon < -180) dLon += 360;
+                        
+                        // True 3D distance through space
+                        const dist = getSatelliteDistance3D(satA, satB);
+                        if (dist > 2500) return; // Ignore far satellites
+
+                        // Determine primary direction (Quadrant)
+                        if (Math.abs(dLat) > Math.abs(dLon)) {
+                            // Vertical (North / South)
+                            if (dLat > 0 && dist < distN) { nearestN = {sat: satB, dist}; distN = dist; }
+                            else if (dLat < 0 && dist < distS) { nearestS = {sat: satB, dist}; distS = dist; }
+                        } else {
+                            // Horizontal (East / West)
+                            if (dLon > 0 && dist < distE) { nearestE = {sat: satB, dist}; distE = dist; }
+                            else if (dLon < 0 && dist < distW) { nearestW = {sat: satB, dist}; distW = dist; }
+                        }
+                    });
+
+                    const nearest = [];
+                    if (nearestN) nearest.push(nearestN);
+                    if (nearestS) nearest.push(nearestS);
+                    if (nearestE) nearest.push(nearestE);
+                    if (nearestW) nearest.push(nearestW);
+
+                    for (let i = 0; i < nearest.length; i++) {
+                        const n = nearest[i];
+                        const satB = n.sat;
+
+                        // Create unique pair ID so we don't draw A->B and B->A
+                        const id1 = satA.name < n.sat.name ? satA.name : n.sat.name;
+                        const id2 = satA.name < n.sat.name ? n.sat.name : satA.name;
+                        const pairId = `${id1}-${id2}`;
+
+                        if (!drawnPairs.has(pairId)) {
+                            drawnPairs.add(pairId);
+                            if (n && n.sat) {
+                                const satB = n.sat;
+                                
+                                // Antimeridian handling for lines
+                                let latlngs = [[satA.lat, satA.lon]];
+                                let l2 = satB.lon;
+                                if (Math.abs(satA.lon - satB.lon) > 180) {
+                                    if (satA.lon > 0) l2 += 360; else l2 -= 360;
+                                }
+                                latlngs.push([satB.lat, l2]);
+                                
+                                let polyline = L.polyline(latlngs, {
+                                    color: '#3b82f6',
+                                    weight: 1.5,
+                                    opacity: 0.8,
+                                    dashArray: '5, 5'
+                                }).addTo(distanceLinesLayer);
+                                
+                                // Explicit midpoint marker for reliable distance label
+                                const midLat = (satA.lat + satB.lat) / 2;
+                                let midLon = (satA.lon + l2) / 2;
+                                if (midLon > 180) midLon -= 360;
+                                if (midLon < -180) midLon += 360;
+                                
+                                    L.marker([midLat, midLon], {
+                                        icon: L.divIcon({
+                                            className: 'custom-distance-label',
+                                            html: `<div style="background-color: white; color: #dc2626; font-family: monospace; font-weight: bold; font-size: 11px; border: 2px solid #dc2626; border-radius: 4px; padding: 2px 4px; text-align: center; width: 60px; height: 20px; line-height: 14px; margin-left: -30px; margin-top: -10px;">${Math.round(n.dist)} KM</div>`,
+                                            iconSize: [0, 0] // Anchor strictly to coordinate
+                                        }),
+                                        interactive: false
+                                    }).addTo(distanceLinesLayer);
+                                }
+                            }
+                        }
+                    });
+                });
+                
+                // Hide satellite labels to prevent user from confusing them with clipped distances
+                document.querySelectorAll('.sat-label').forEach(el => el.style.display = 'none');
+            } else {
+                // Restore satellite labels when distance mode is off
+                document.querySelectorAll('.sat-label').forEach(el => el.style.display = '');
+            }
+        };
+
+        const openModalById = (id) => {
+            const sat = satellites.find(s => String(s.noradId) === id);
+            if (sat) openModal(sat);
+        };
+
+        let currentModalSat = null;
+        let currentModalExtra = null;
+        let currentModalTab = 'overview';
+
+        const renderModalContent = () => {
+            if (!currentModalSat || !currentModalExtra) return;
+            const sat = currentModalSat;
+            const extra = currentModalExtra;
+            const org = getOrganization(sat.name, sat.countryCode);
+            const orbit = getOrbitClass(sat.apogee, sat.perigee, sat.alt);
+            const currentYear = new Date().getFullYear();
+            const age = sat.launchYear !== "Unknown" ? currentYear - parseInt(sat.launchYear) : "Unknown";
+
+            let html = `
+                <div class="flex items-center gap-2 mb-4 border-b border-slate-100 pb-4 flex-wrap">
+                    <span class="bg-slate-100 text-slate-700 text-[10px] font-mono px-3 py-1 rounded-sm border border-slate-200 uppercase tracking-widest">ORG: ${org}</span>
+                    <span class="bg-slate-100 text-slate-700 text-[10px] font-mono px-3 py-1 rounded-sm border border-slate-200 uppercase tracking-widest">TYPE: ${sat.objectType || 'UNK'}</span>
+                    <span class="bg-blue-50 text-blue-700 text-[10px] font-mono px-3 py-1 rounded-sm border border-blue-200 uppercase tracking-widest">ORBIT: ${orbit}</span>
+                </div>
+
+                <div class="flex border-b border-slate-200 mb-4">
+                    <button onclick="setModalTab('overview')" class="flex-1 py-2 text-[10px] sm:text-xs font-mono font-bold tracking-widest uppercase border-b-2 ${currentModalTab === 'overview' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'} transition">Overview</button>
+                    <button onclick="setModalTab('physics')" class="flex-1 py-2 text-[10px] sm:text-xs font-mono font-bold tracking-widest uppercase border-b-2 ${currentModalTab === 'physics' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'} transition">Physics</button>
+                    <button onclick="setModalTab('network')" class="flex-1 py-2 text-[10px] sm:text-xs font-mono font-bold tracking-widest uppercase border-b-2 ${currentModalTab === 'network' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'} transition">Network</button>
+                    <button onclick="setModalTab('airspace')" class="flex-1 py-2 text-[10px] sm:text-xs font-mono font-bold tracking-widest uppercase border-b-2 ${currentModalTab === 'airspace' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'} transition">Airspace</button>
+                </div>
+                
+                <div class="min-h-[280px]">
+            `;
+
+            if (currentModalTab === 'overview') {
+                html += `
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div class="border border-slate-200 p-4 rounded bg-slate-50 shadow-sm">
+                            <div class="text-xs text-slate-500 mb-2 uppercase tracking-widest font-mono">Velocity</div>
+                            <div class="text-2xl font-light text-slate-900 mb-1">
+                                ${new Intl.NumberFormat('th-TH').format(Math.round(sat.velocityKmh))} <span class="text-sm text-slate-500 font-mono">km/h</span>
+                            </div>
+                            <div class="text-xs text-slate-500 font-mono">${sat.velocityKms.toFixed(2)} km/s</div>
+                        </div>
+                        <div class="border border-slate-200 p-4 rounded bg-slate-50 shadow-sm">
+                            <div class="text-xs text-slate-500 mb-2 uppercase tracking-widest font-mono">Altitude</div>
+                            <div class="text-2xl font-light text-slate-900 mb-1">
+                                ${new Intl.NumberFormat('th-TH').format(Math.round(sat.alt))} <span class="text-sm text-slate-500 font-mono">km</span>
+                            </div>
+                            <div class="text-xs text-slate-500 font-mono">From MSL</div>
+                        </div>
+                    </div>
+
+                    <div class="border border-slate-200 p-4 rounded bg-slate-50 flex items-center justify-between shadow-sm">
+                        <div>
+                            <div class="text-xs text-slate-500 mb-1 uppercase tracking-widest font-mono">Live Coordinates</div>
+                            <div class="text-slate-800 font-mono text-sm">${sat.lat.toFixed(4)}° N, ${sat.lon.toFixed(4)}° E</div>
+                        </div>
+                        <div class="text-right">
+                            <span class="inline-block bg-white text-slate-800 border border-slate-200 font-mono text-[10px] font-bold px-2 py-1 uppercase tracking-widest rounded-sm">
+                                NORAD ${sat.noradId}
+                            </span>
+                        </div>
+                    </div>
+                `;
+            } else if (currentModalTab === 'physics') {
+                let sunlitStatus = extra.sunlit 
+                    ? '<span class="text-amber-500 font-bold">☀️ SUNLIT</span> (Visible if dark)' 
+                    : '<span class="text-indigo-900 font-bold">🌑 ECLIPSED</span> (Earth Shadow)';
+                    
+                let azEl = `Az: ${extra.azimuth.toFixed(1)}° | El: ${extra.elevation.toFixed(1)}° (Dist: ${Math.round(extra.distance)}km)`;
+                let revs = `${extra.revolutions.toFixed(2)} / Day`;
+
+                html += `
+                    <div class="border border-slate-200 rounded bg-slate-50 mb-4 p-4 shadow-sm">
+                        <div class="text-xs text-slate-500 mb-3 uppercase tracking-widest font-mono border-b border-slate-200 pb-2">Skyfield Physics & Predictions</div>
+                        <div class="grid grid-cols-1 gap-y-3 text-sm font-mono text-slate-800">
+                            <div><span class="text-slate-400 block text-[10px] uppercase">Visibility Status</span>${sunlitStatus}</div>
+                            <div><span class="text-slate-400 block text-[10px] uppercase">From Bangkok (Lat 13.7, Lon 100.5)</span>${azEl}</div>
+                        </div>
+                    </div>
+
+                    <div class="border border-slate-200 rounded bg-slate-50 mb-4 p-4 shadow-sm">
+                        <div class="text-xs text-slate-500 mb-3 uppercase tracking-widest font-mono border-b border-slate-200 pb-2">Orbital Characteristics</div>
+                        <div class="grid grid-cols-2 gap-y-3 text-sm font-mono text-slate-800">
+                            <div><span class="text-slate-400 block text-[10px] uppercase">Revolutions</span>${revs}</div>
+                            <div><span class="text-slate-400 block text-[10px] uppercase">Age in Orbit</span>${age} Years (Since ${sat.launchYear})</div>
+                            <div><span class="text-slate-400 block text-[10px] uppercase">Apogee / Perigee</span>${Math.round(sat.apogee || 0)} / ${Math.round(sat.perigee || 0)} km</div>
+                            <div><span class="text-slate-400 block text-[10px] uppercase">Inclination</span>${Number(sat.inclination).toFixed(2)}°</div>
+                        </div>
+                    </div>
+                `;
+            } else if (currentModalTab === 'network') {
+                if (sat.name.toUpperCase().includes("ONEWEB")) {
+                    const onewebs = satellites.filter(s => s.name.toUpperCase().includes("ONEWEB"));
+                    let nearestN = null, distN = Infinity;
+                    let nearestS = null, distS = Infinity;
+                    let nearestE = null, distE = Infinity;
+                    let nearestW = null, distW = Infinity;
+                    
+                    onewebs.forEach(satB => {
+                        if (sat.noradId === satB.noradId) return;
+                        const dLat = satB.lat - sat.lat;
+                        let dLon = satB.lon - sat.lon;
+                        if (dLon > 180) dLon -= 360;
+                        if (dLon < -180) dLon += 360;
+                        if (Math.abs(dLat) > 30 || Math.abs(dLon) > 30) return;
+                        const dist = getSatelliteDistance3D(sat, satB);
+                        if (dist > 2500) return;
+                        
+                        if (Math.abs(dLat) > Math.abs(dLon)) {
+                            if (dLat > 0 && dist < distN) { nearestN = {sat: satB, dist, dir: "North (Same Plane)"}; distN = dist; }
+                            else if (dLat < 0 && dist < distS) { nearestS = {sat: satB, dist, dir: "South (Same Plane)"}; distS = dist; }
+                        } else {
+                            if (dLon > 0 && dist < distE) { nearestE = {sat: satB, dist, dir: "East (Adjacent Plane)"}; distE = dist; }
+                            else if (dLon < 0 && dist < distW) { nearestW = {sat: satB, dist, dir: "West (Adjacent Plane)"}; distW = dist; }
+                        }
+                    });
+
+                    const nearest = [];
+                    if (nearestN) nearest.push(nearestN);
+                    if (nearestS) nearest.push(nearestS);
+                    if (nearestE) nearest.push(nearestE);
+                    if (nearestW) nearest.push(nearestW);
+                    
+                    nearest.sort((a,b) => a.dist - b.dist);
+
+                    if (nearest.length > 0) {
+                        html += `<div class="text-xs text-slate-500 mb-3 uppercase tracking-widest font-mono">Nearby OneWeb Connections</div>`;
+                        html += `<div class="flex flex-col gap-2">`;
+                        nearest.forEach(n => {
+                            html += `
+                                <div class="flex justify-between items-center bg-blue-50 border border-blue-100 p-3 rounded cursor-pointer hover:bg-blue-100 transition shadow-sm" onclick='focusSatellite(${JSON.stringify(n.sat).replace(/'/g, "&#39;")}); closeModal();'>
+                                    <div>
+                                        <div class="font-bold text-blue-900 text-sm truncate">${n.sat.name}</div>
+                                        <div class="text-[10px] text-blue-600 font-mono uppercase font-bold mt-1">${n.dir}</div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="font-mono text-blue-800 font-bold">${Math.round(n.dist)} km</div>
+                                        <div class="text-[9px] text-blue-500 font-mono uppercase tracking-widest mt-1">Jump to <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        html += `</div>`;
+                    } else {
+                        html += `<div class="text-center p-8 text-slate-500 font-mono text-sm uppercase">No nearby OneWeb satellites in range.</div>`;
+                    }
+                } else {
+                    html += `
+                        <div class="text-center p-8 text-slate-500 font-mono text-sm uppercase bg-slate-50 rounded border border-slate-200">
+                            Network topology distance is currently only calculated for the OneWeb constellation.
+                        </div>
+                    `;
+                }
+            } else if (currentModalTab === 'airspace') {
+                const air = extra.airspace;
+                let airHtml = '';
+                
+                if (air && air.status === 'inside') {
+                    airHtml = `
+                        <div class="bg-emerald-50 border border-emerald-200 rounded p-5 text-center shadow-sm mb-4">
+                            <div class="text-emerald-600 font-bold text-lg mb-1">CURRENTLY IN THAI AIRSPACE 🇹🇭</div>
+                            <div class="text-sm font-mono text-emerald-800">Leaves in: <span class="font-bold text-lg">${air.exit_in}</span> mins</div>
+                            <div class="text-[10px] text-emerald-500 uppercase mt-2 font-bold tracking-widest">Total Pass Duration: ${air.duration} mins</div>
+                        </div>
+                    `;
+                } else if (air && air.status === 'upcoming') {
+                    airHtml = `
+                        <div class="bg-amber-50 border border-amber-200 rounded p-5 text-center shadow-sm mb-4">
+                            <div class="text-amber-600 font-bold text-lg mb-1">APPROACHING THAI AIRSPACE 🇹🇭</div>
+                            <div class="text-sm font-mono text-amber-800">Enters in: <span class="font-bold text-lg">${air.entry_in}</span> mins</div>
+                            <div class="text-[10px] text-amber-600 uppercase mt-2 font-bold tracking-widest">Will stay for: ${air.duration} mins</div>
+                            <div class="text-[9px] text-amber-500 uppercase mt-1">Leaves in ${air.exit_in} mins</div>
+                        </div>
+                    `;
+                } else {
+                    airHtml = `
+                        <div class="bg-slate-50 border border-slate-200 rounded p-5 text-center shadow-sm mb-4">
+                            <div class="text-slate-500 font-bold text-lg mb-1">NOT IN RANGE 🇹🇭</div>
+                            <div class="text-sm font-mono text-slate-500">Will not enter Thai airspace within the next 90 minutes.</div>
+                        </div>
+                    `;
+                }
+                
+                html += `
+                    <div class="text-xs text-slate-500 mb-3 uppercase tracking-widest font-mono border-b border-slate-200 pb-2">Airspace Prediction</div>
+                    ${airHtml}
+                    <div class="text-[9px] text-slate-400 font-mono text-center uppercase tracking-widest mt-4">
+                        Prediction uses bounding box<br>
+                        Lat: 5.6° - 20.5° N, Lon: 97.3° - 105.6° E
+                    </div>
+                `;
+            }
+
+            html += `</div>`; // end min-h
+            document.getElementById('modal-content').innerHTML = html;
+        };
+
+        const setModalTab = (tab) => {
+            currentModalTab = tab;
+            renderModalContent();
+        };
+
+        const openModal = async (sat) => {
+            currentModalSat = sat;
+            currentModalTab = 'overview';
+            document.getElementById('modal-title').innerText = sat.name;
+            
+            // Show loading state
+            document.getElementById('modal-content').innerHTML = `
+                <div class="flex flex-col items-center justify-center py-10">
+                    <div class="w-6 h-6 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin mb-4"></div>
+                    <span class="text-xs text-slate-500 font-mono uppercase tracking-widest">Calculating Skyfield Physics...</span>
+                </div>
+            `;
+            document.getElementById('modal-backdrop').style.display = 'flex';
+            
+            // Clean up old path if exists
+            if (currentPathLayer) {
+                map.removeLayer(currentPathLayer);
+                currentPathLayer = null;
+            }
+
+            try {
+                const res = await fetch(`/api/satellite/${sat.noradId}`);
+                currentModalExtra = await res.json();
+                
+                if (currentModalExtra.success && currentModalExtra.path && currentModalExtra.path.length > 0) {
+                    currentPathLayer = L.polyline(currentModalExtra.path, {
+                        color: '#3b82f6',
+                        weight: 3,
+                        dashArray: '5, 10',
+                        opacity: 0.7
+                    }).addTo(map);
+                }
+
+                renderModalContent();
+            } catch (err) {
+                console.error("Failed to load extra details", err);
+                document.getElementById('modal-content').innerHTML = '<div class="text-red-500 p-4 text-center">Failed to calculate physics.</div>';
+            }
+        };
+        
+        const openPredictionsModal = async () => {
+            document.getElementById('modal-title').innerText = "OneWeb Pass Predictions";
+            const modalContent = document.getElementById('modal-content');
+            
+            document.getElementById('modal-backdrop').style.display = 'flex';
+            modalContent.innerHTML = `
+                <div class="min-h-[280px] flex flex-col items-center justify-center">
+                    <svg class="w-8 h-8 text-emerald-500 animate-spin mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    <div class="text-slate-400 text-sm font-mono animate-pulse uppercase tracking-widest">Calculating orbital paths...</div>
+                </div>
+            `;
+            
+            try {
+                const res = await fetch('/api/oneweb-predictions');
+                const data = await res.json();
+                
+                if (data.success && data.predictions) {
+                    if (data.predictions.length === 0) {
+                        modalContent.innerHTML = modalContent.innerHTML.replace(/<div class="min-h-\[280px\].*<\/div>/s, `
+                            <div class="min-h-[280px] flex items-center justify-center text-center p-8 text-slate-500 font-mono text-sm uppercase bg-slate-50 rounded border border-slate-200">
+                                No OneWeb satellites are predicted to enter Thai airspace within the next 90 minutes.
+                            </div>
+                        `);
+                        return;
+                    }
+                    
+                    let tableRows = data.predictions.map(p => `
+                        <tr class="border-b border-slate-100 hover:bg-slate-50 transition">
+                            <td class="py-3 px-2 font-mono text-xs font-bold text-slate-700">${p.name}</td>
+                            <td class="py-3 px-2 text-center">
+                                <span class="bg-amber-100 text-amber-700 py-1 px-2 rounded font-bold font-mono text-[10px]">${p.entry_in} MINS</span>
+                            </td>
+                            <td class="py-3 px-2 text-center font-mono text-[10px] uppercase tracking-widest text-slate-500">${p.duration} mins</td>
+                            <td class="py-3 px-2 text-right">
+                                <button onclick="closeModal(); document.getElementById('search-input').value='${p.noradId}'; document.getElementById('search-input').dispatchEvent(new Event('input'));" class="text-[10px] bg-slate-100 hover:bg-blue-100 hover:text-blue-600 text-slate-500 px-2 py-1 rounded font-mono font-bold transition">TRACK</button>
+                            </td>
+                        </tr>
+                    `).join('');
+                    
+                    const html = `
+                        <div class="mb-4 bg-emerald-50 p-3 rounded border border-emerald-100 flex items-center gap-3">
+                            <div class="bg-emerald-100 p-2 rounded-full text-emerald-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                            </div>
+                            <div>
+                                <div class="font-bold text-emerald-800 text-sm">NEXT 90 MINUTES</div>
+                                <div class="text-[10px] uppercase tracking-widest text-emerald-600">${data.predictions.length} Satellites entering Thai airspace</div>
+                            </div>
+                        </div>
+                        <div class="max-h-[60vh] overflow-y-auto custom-scrollbar pr-2">
+                            <table class="w-full text-left">
+                                <thead>
+                                    <tr class="text-[10px] font-mono text-slate-400 uppercase tracking-widest border-b-2 border-slate-200">
+                                        <th class="pb-2 px-2">Satellite</th>
+                                        <th class="pb-2 px-2 text-center">Arrives In</th>
+                                        <th class="pb-2 px-2 text-center">Stays For</th>
+                                        <th class="pb-2 px-2 text-right">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${tableRows}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                    modalContent.innerHTML = html;
+                } else {
+                    throw new Error("Failed to load");
+                }
+            } catch (err) {
+                modalContent.innerHTML = modalContent.innerHTML.replace(/<div class="min-h-\[280px\].*<\/div>/s, `
+                    <div class="min-h-[280px] flex items-center justify-center text-center p-8 text-red-500 font-mono text-sm uppercase bg-red-50 rounded border border-red-200">
+                        Error calculating predictions. Please try again.
+                    </div>
+                `);
+            }
+        };
+
+        const closeModal = () => {
+            document.getElementById('modal-backdrop').style.display = 'none';
+            if (currentPathLayer) {
+                map.removeLayer(currentPathLayer);
+                currentPathLayer = null;
+            }
+        };
+
+        // Listeners
+        document.getElementById('type-filter').addEventListener('change', () => { renderUI(); updateMap(); });
+        document.getElementById('search-input').addEventListener('input', () => { renderUI(); updateMap(); });
+        document.getElementById('oneweb-toggle').addEventListener('change', () => { fetchSatellites(); });
+        document.getElementById('oneweb-distance-toggle').addEventListener('change', () => { updateMap(); });
+        document.getElementById('coverage-box-toggle').addEventListener('change', () => { updateMap(); });
+        document.getElementById('oneweb-strips-toggle').addEventListener('change', () => { updateMap(); });
+        document.getElementById('oneweb-max-area-toggle').addEventListener('change', () => { updateMap(); });
+        document.getElementById('oneweb-pitch-toggle').addEventListener('change', () => { updateMap(); });
+        document.getElementById('oneweb-strips-toggle').addEventListener('change', () => { updateMap(); });
+
+        // Prevent Leaflet map from stealing scroll events when interacting with UI
+        L.DomEvent.disableScrollPropagation(document.querySelector('.dashboard-overlay'));
+        L.DomEvent.disableClickPropagation(document.querySelector('.dashboard-overlay'));
+
+        // Start polling
+        fetchSatellites();
+        setInterval(fetchSatellites, 5000); // Poll every 5s to reduce browser rendering lag
+    </script>
+</body>
+</html>
