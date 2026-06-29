@@ -1,12 +1,21 @@
 {
   "expo": {
-    "name": "OneWeb RN Simulator",
+    "name": "OneWeb Core Simulator",
     "slug": "oneweb-rn-simulator",
     "version": "1.0.0",
-    "orientation": "landscape",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.anonymous.oneweb-rn-simulator"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./images/alexas_fotos-satellite-2771128.jpg",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true
     },
     "assetBundlePatterns": [
       "**/*"
