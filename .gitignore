@@ -1,5 +1,8 @@
 node_modules
 server/.env
 server/node_modules
+backend/.env
+backend/__pycache__/
+backend/debug.log
 firebaseConfig.js
 supabaseConfig.js
