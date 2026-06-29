@@ -20,9 +20,6 @@ export default function SatelliteMapScreen({ onLogout }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [timestamp, setTimestamp] = useState('');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isPredictionModalOpen, setIsPredictionModalOpen] = useState(false);
-  const [predictions, setPredictions] = useState([]);
-  const [loadingPredictions, setLoadingPredictions] = useState(false);
 
   const [mapRegion, setMapRegion] = useState({
     latitude: 13.736717,
@@ -38,33 +35,11 @@ export default function SatelliteMapScreen({ onLogout }) {
     covStrips: false,
     maxService: true,
     progPitch: false,
-    entryTime: false,
   });
 
   const toggleSwitch = useCallback((key) => {
-    if (key === 'entryTime') {
-      setSwitches(prev => ({ ...prev, [key]: !prev[key] }));
-      openPredictionsModal();
-      return;
-    }
     setSwitches(prev => ({ ...prev, [key]: !prev[key] }));
   }, []);
-
-  const openPredictionsModal = async () => {
-    setIsPredictionModalOpen(true);
-    setLoadingPredictions(true);
-    try {
-      const res = await fetch(`${SAT_API_URL}/api/oneweb-predictions`);
-      const json = await res.json();
-      if (json.success && json.predictions) {
-        setPredictions(json.predictions);
-      }
-    } catch (err) {
-      console.log("Prediction fetch error:", err);
-    } finally {
-      setLoadingPredictions(false);
-    }
-  };
 
   const fetchSatellites = () => {
     fetch(`${SAT_API_URL}/api/satellites?oneweb_planes=true`)
@@ -222,7 +197,6 @@ export default function SatelliteMapScreen({ onLogout }) {
         <StyledSwitchRow title="COVERAGE STRIPS (16 BEAMS)" icon="align-justify" color="#f472b6" active={switches.covStrips} onToggle={() => toggleSwitch('covStrips')} />
         <StyledSwitchRow title="MAX SERVICE AREA (684KM)" icon="target" color="#eab308" active={switches.maxService} onToggle={() => toggleSwitch('maxService')} />
         <StyledSwitchRow title="PROGRESSIVE PITCH & GSO PROTECTION" icon="dollar-sign" color="#f87171" active={switches.progPitch} onToggle={() => toggleSwitch('progPitch')} />
-        <StyledSwitchRow title="ONEWEB ENTRY TIME" icon="clock" color="#34d399" active={switches.entryTime} onToggle={() => toggleSwitch('entryTime')} extraBtn="CHECK TIME" />
       </View>
       <TouchableOpacity style={styles.logoutBtn} onPress={onLogout}>
         <Feather name="log-out" size={14} color="#f87171" />
@@ -335,38 +309,6 @@ export default function SatelliteMapScreen({ onLogout }) {
         </View>
       </Modal>
 
-      <Modal visible={isPredictionModalOpen} animationType="fade" transparent={true} onRequestClose={() => setIsPredictionModalOpen(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { height: '70%' }]}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>ONEWEB PASS PREDICTIONS</Text>
-              <TouchableOpacity onPress={() => setIsPredictionModalOpen(false)} style={styles.closeBtn}>
-                <Feather name="x" size={24} color="#64748b" />
-              </TouchableOpacity>
-            </View>
-            <View style={styles.panelContent}>
-              {loadingPredictions ? (
-                <ActivityIndicator size="large" color="#10b981" />
-              ) : predictions.length === 0 ? (
-                <Text style={styles.listTitle}>No OneWeb satellites predicted in next 90 mins.</Text>
-              ) : (
-                <FlatList
-                  data={predictions}
-                  keyExtractor={(item) => item.noradId.toString()}
-                  showsVerticalScrollIndicator={false}
-                  renderItem={({ item }) => (
-                    <View style={styles.predictionRow}>
-                      <Text style={styles.predName}>{item.name}</Text>
-                      <View style={styles.predInBadge}><Text style={styles.predInText}>{item.entry_in} MINS</Text></View>
-                      <Text style={styles.predDuration}>{item.duration} mins</Text>
-                    </View>
-                  )}
-                />
-              )}
-            </View>
-          </View>
-        </View>
-      </Modal>
     </SafeAreaView>
   );
 }
