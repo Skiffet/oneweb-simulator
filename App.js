@@ -10,12 +10,14 @@ import {
 } from "react-native";
 import LoginScreen from "./screens/LoginScreen";
 import SatelliteMapScreen from "./screens/SatelliteMapScreen";
+import { API_URL } from "./api";
 
 const IDLE_TIMEOUT_MS = 15 * 60 * 1000;  // 15 นาที
 const WARN_BEFORE_MS = 60 * 1000;         // เตือน 1 นาทีก่อน logout
 
 export default function App() {
   const [user, setUser] = useState(null);
+  const [token, setToken] = useState(null);
   const [showIdleWarning, setShowIdleWarning] = useState(false);
 
   const lastActivityRef = useRef(Date.now());
@@ -39,8 +41,9 @@ export default function App() {
     }, IDLE_TIMEOUT_MS);
   }, []);
 
-  const handleLogin = useCallback((userData) => {
+  const handleLogin = useCallback((userData, userToken) => {
     setUser(userData);
+    setToken(userToken);
     resetTimers();
   }, [resetTimers]);
 
@@ -51,6 +54,17 @@ export default function App() {
     if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
     if (warnTimerRef.current) clearTimeout(warnTimerRef.current);
   }, []);
+
+  useEffect(() => {
+    if (!token) return;
+    const interval = setInterval(() => {
+      fetch(`${API_URL}/api/auth/heartbeat`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      }).catch(() => {});
+    }, 60 * 1000);
+    return () => clearInterval(interval);
+  }, [token]);
 
   const handleActivity = useCallback(() => {
     if (user) resetTimers();
@@ -88,7 +102,7 @@ export default function App() {
 
   return (
     <View style={styles.root} onTouchStart={handleActivity} onTouchMove={handleActivity}>
-      <SatelliteMapScreen onLogout={handleLogout} />
+      <SatelliteMapScreen onLogout={handleLogout} token={token} user={user} />
 
       <Modal visible={showIdleWarning} transparent animationType="fade">
         <View style={styles.warningOverlay}>

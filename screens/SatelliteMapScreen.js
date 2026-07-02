@@ -13,13 +13,15 @@ import { SatCard } from '../src/components/SatCard';
 import { DistanceMarker } from '../src/components/DistanceMarker';
 import { SatOverlays } from '../src/components/SatOverlays';
 import { SAT_API_URL } from '../api';
+import AdminScreen from './AdminScreen';
 
-export default function SatelliteMapScreen({ onLogout }) {
+export default function SatelliteMapScreen({ onLogout, token, user }) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [timestamp, setTimestamp] = useState('');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isAdminOpen, setIsAdminOpen] = useState(false);
 
   const [mapRegion, setMapRegion] = useState({
     latitude: 13.736717,
@@ -198,6 +200,12 @@ export default function SatelliteMapScreen({ onLogout }) {
         <StyledSwitchRow title="MAX SERVICE AREA (684KM)" icon="target" color="#eab308" active={switches.maxService} onToggle={() => toggleSwitch('maxService')} />
         <StyledSwitchRow title="PROGRESSIVE PITCH & GSO PROTECTION" icon="dollar-sign" color="#f87171" active={switches.progPitch} onToggle={() => toggleSwitch('progPitch')} />
       </View>
+      {user?.is_admin && (
+        <TouchableOpacity style={styles.adminBtn} onPress={() => { setIsMenuOpen(false); setIsAdminOpen(true); }}>
+          <Feather name="users" size={14} color="#0ea5e9" />
+          <Text style={styles.adminText}>ผู้ใช้งานออนไลน์</Text>
+        </TouchableOpacity>
+      )}
       <TouchableOpacity style={styles.logoutBtn} onPress={onLogout}>
         <Feather name="log-out" size={14} color="#f87171" />
         <Text style={styles.logoutText}>ออกจากระบบ</Text>
@@ -309,6 +317,10 @@ export default function SatelliteMapScreen({ onLogout }) {
         </View>
       </Modal>
 
+      <Modal visible={isAdminOpen} animationType="slide" onRequestClose={() => setIsAdminOpen(false)}>
+        <AdminScreen token={token} onClose={() => setIsAdminOpen(false)} />
+      </Modal>
+
     </SafeAreaView>
   );
 }
@@ -418,6 +430,13 @@ const styles = StyleSheet.create({
   },
   searchInput: { fontSize: 12, color: '#334155' },
   switchesContainer: { marginBottom: 16 },
+  adminBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingVertical: 10, paddingHorizontal: 12,
+    backgroundColor: '#f0f9ff', borderWidth: 1, borderColor: '#bae6fd',
+    borderRadius: 6, marginBottom: 8, alignSelf: 'flex-start',
+  },
+  adminText: { fontSize: 12, color: '#0ea5e9', fontWeight: '600' },
   logoutBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     paddingVertical: 10, paddingHorizontal: 12,

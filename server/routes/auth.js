@@ -54,16 +54,43 @@ router.post("/login", async (req, res) => {
     if (!valid)
       return res.status(401).json({ error: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" });
 
-    await pool.query("UPDATE users SET last_login = NOW() WHERE id = $1", [user.id]);
+    await pool.query("UPDATE users SET last_login = NOW(), last_seen = NOW() WHERE id = $1", [user.id]);
 
     const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
 
-    res.json({ user: { id: user.id, email: user.email }, token });
+    res.json({ user: { id: user.id, email: user.email, is_admin: user.is_admin }, token });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "เกิดข้อผิดพลาด กรุณาลองใหม่" });
+  }
+});
+
+router.post("/heartbeat", async (req, res) => {
+  const auth = req.headers.authorization;
+  if (!auth) return res.status(401).json({ error: "Unauthorized" });
+  try {
+    const token = auth.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    await pool.query("UPDATE users SET last_seen = NOW() WHERE id = $1", [decoded.id]);
+    res.json({ ok: true });
+  } catch {
+    res.status(401).json({ error: "Unauthorized" });
+  }
+});
+
+router.get("/active-users", async (req, res) => {
+  const auth = req.headers.authorization;
+  if (!auth) return res.status(401).json({ error: "Unauthorized" });
+  try {
+    jwt.verify(auth.split(" ")[1], process.env.JWT_SECRET);
+    const result = await pool.query(
+      "SELECT email, last_seen FROM users WHERE last_seen > NOW() - INTERVAL '15 minutes' ORDER BY last_seen DESC"
+    );
+    res.json({ users: result.rows });
+  } catch {
+    res.status(401).json({ error: "Unauthorized" });
   }
 });
 
