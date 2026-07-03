@@ -147,6 +147,42 @@ export default function SatDetailModal({ visible, sat, detail, loading, onClose 
                 </>
               )}
 
+              {detail?.passes?.length > 0 && (
+                <>
+                  <Text style={styles.sectionTitle}>PASS PREDICTION (Bangkok · El ≥ 10°)</Text>
+                  {detail.passes.map((p, i) => {
+                    const elColor = p.max_el >= 45 ? '#22c55e' : p.max_el >= 20 ? '#fbbf24' : '#f87171';
+                    const inMin = p.in_min;
+                    let timeLabel;
+                    if (inMin < 0) timeLabel = 'กำลังผ่าน';
+                    else if (inMin < 60) timeLabel = `ใน ${inMin} นาที`;
+                    else timeLabel = `ใน ${Math.floor(inMin / 60)} ชม. ${inMin % 60} นาที`;
+
+                    const aosTime = new Date(p.aos).toLocaleTimeString('th-TH', {
+                      hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Bangkok'
+                    });
+                    const losTime = new Date(p.los).toLocaleTimeString('th-TH', {
+                      hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Bangkok'
+                    });
+
+                    return (
+                      <View key={i} style={[styles.passCard, i === 0 && { borderColor: elColor }]}>
+                        <View style={styles.passRow}>
+                          <View style={[styles.passElBadge, { backgroundColor: elColor + '22', borderColor: elColor }]}>
+                            <Text style={[styles.passElText, { color: elColor }]}>{p.max_el}°</Text>
+                            <Text style={[styles.passElSub, { color: elColor }]}>MAX EL</Text>
+                          </View>
+                          <View style={styles.passInfo}>
+                            <Text style={[styles.passTime, i === 0 && { color: elColor }]}>{timeLabel}</Text>
+                            <Text style={styles.passWindow}>{aosTime} → {losTime}  ({p.duration_min} นาที)</Text>
+                          </View>
+                        </View>
+                      </View>
+                    );
+                  })}
+                </>
+              )}
+
               <Text style={styles.sectionTitle}>IDENTITY</Text>
               <View style={styles.card}>
                 <InfoRow label="Country"     value={sat.countryCode} />
@@ -250,4 +286,19 @@ const styles = StyleSheet.create({
   airspaceCard: { borderWidth: 1.5, paddingVertical: 12, paddingHorizontal: 14 },
   airspaceText: { fontSize: 13, fontWeight: '700', fontFamily: MONO },
   airspaceSub: { fontSize: 11, color: '#64748b', fontFamily: MONO, marginTop: 4 },
+  passCard: {
+    backgroundColor: '#1e293b', borderRadius: 10,
+    padding: 12, marginBottom: 8,
+    borderWidth: 1, borderColor: '#1e3a5f',
+  },
+  passRow: { flexDirection: 'row', alignItems: 'center' },
+  passElBadge: {
+    width: 54, height: 54, borderRadius: 10, borderWidth: 1.5,
+    alignItems: 'center', justifyContent: 'center', marginRight: 14,
+  },
+  passElText: { fontSize: 16, fontWeight: '800', fontFamily: MONO },
+  passElSub: { fontSize: 8, fontWeight: '700', fontFamily: MONO, letterSpacing: 1 },
+  passInfo: { flex: 1 },
+  passTime: { fontSize: 13, fontWeight: '800', color: '#f1f5f9', fontFamily: MONO, marginBottom: 4 },
+  passWindow: { fontSize: 11, color: '#64748b', fontFamily: MONO },
 });

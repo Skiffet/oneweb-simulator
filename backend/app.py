@@ -399,6 +399,36 @@ def api_satellite_detail(norad_id):
                     airspace["exit_in"] = len(in_bounds) - now_idx
                     airspace["duration"] = len(in_bounds) - entry_idx
         
+        # 6. Pass Prediction (next 5 passes over Bangkok, min elevation 10°)
+        passes = []
+        try:
+            t0 = ts.from_datetime(now)
+            t1 = ts.from_datetime(now + timedelta(days=3))
+            t_ev, events = sat.find_events(BKK, t0, t1, altitude_degrees=10.0)
+            cur = {}
+            for ti, ev in zip(t_ev, events):
+                dt = ti.utc_datetime()
+                if ev == 0:
+                    cur = {'aos': dt.isoformat(), 'aos_ts': dt.timestamp()}
+                elif ev == 1:
+                    topo = (sat - BKK).at(ti)
+                    el, az_p, _ = topo.altaz()
+                    cur['tca'] = dt.isoformat()
+                    cur['max_el'] = round(float(el.degrees), 1)
+                    cur['az_peak'] = round(float(az_p.degrees), 1)
+                elif ev == 2:
+                    if 'aos_ts' in cur and 'max_el' in cur:
+                        cur['los'] = dt.isoformat()
+                        cur['duration_min'] = round((dt.timestamp() - cur['aos_ts']) / 60, 1)
+                        cur['in_min'] = int((cur['aos_ts'] - now.timestamp()) / 60)
+                        del cur['aos_ts']
+                        passes.append(cur)
+                        if len(passes) >= 5:
+                            break
+                    cur = {}
+        except Exception:
+            passes = []
+
         return jsonify({
             "success": True,
             "sunlit": is_sunlit,
@@ -407,7 +437,8 @@ def api_satellite_detail(norad_id):
             "distance": round(float(distance.km), 4),
             "revolutions": round(mean_motion, 4),
             "path": path,
-            "airspace": airspace
+            "airspace": airspace,
+            "passes": passes
         })
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
