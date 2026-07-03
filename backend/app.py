@@ -339,16 +339,15 @@ def api_satellite_detail(norad_id):
         # 3. Revolutions per Day
         mean_motion = float(tle.get("MEAN_MOTION") or 0)
         
-        # 4. Path prediction (-15 to +15 mins)
-        times = [now + timedelta(minutes=i) for i in range(-15, 16, 3)]
+        # 4. Ground track: -10 to +90 mins, every 3 mins
+        times = [now + timedelta(minutes=i) for i in range(-10, 91, 3)]
         t_array = ts.from_datetimes(times)
-        
+
         positions = sat.at(t_array)
         subpoints = positions.subpoint()
         lats = subpoints.latitude.degrees
         lons = subpoints.longitude.degrees
-        
-        # Round path coordinates
+
         path = [[round(float(lat), 4), round(float(lon), 4)] for lat, lon in zip(lats, lons)]
         
         # 5. Airspace Calculation (-30 to +90 mins)

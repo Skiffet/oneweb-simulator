@@ -2,7 +2,7 @@ import React from 'react';
 import { Marker, Circle, Polygon } from 'react-native-maps';
 import { satEqual, getApproxElevation } from '../utils/mathUtils';
 
-export const SatOverlays = React.memo(({ sat, switches, stripColor }) => {
+export const SatOverlays = React.memo(({ sat, switches, stripColor, onPress }) => {
   if (sat.lat == null || sat.lon == null) return null;
   
   const isOneweb = sat.name && sat.name.toUpperCase().includes('ONEWEB');
@@ -42,6 +42,7 @@ export const SatOverlays = React.memo(({ sat, switches, stripColor }) => {
         description={`Alt: ${sat.alt?.toFixed(1)} km`}
         opacity={0}
         tracksViewChanges={false}
+        onPress={() => onPress && onPress(sat)}
       />
       
       <Circle

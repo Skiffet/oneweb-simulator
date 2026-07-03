@@ -1,11 +1,12 @@
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
+
 import {
   StyleSheet, Text, View, FlatList, ActivityIndicator,
   TextInput, SafeAreaView, Platform, StatusBar, TouchableOpacity,
-  Switch, Modal, Image
+  Modal, Image
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import MapView, { Marker, Polygon, Circle, Polyline } from 'react-native-maps';
+import MapView, { Polyline } from 'react-native-maps';
 
 import { STRIP_COLORS } from '../src/constants/theme';
 import { StyledSwitchRow } from '../src/components/StyledSwitchRow';
@@ -14,6 +15,7 @@ import { DistanceMarker } from '../src/components/DistanceMarker';
 import { SatOverlays } from '../src/components/SatOverlays';
 import { SAT_API_URL } from '../api';
 import AdminScreen from './AdminScreen';
+import SatDetailModal from './SatDetailModal';
 
 export default function SatelliteMapScreen({ onLogout, token, user }) {
   const [data, setData] = useState([]);
@@ -22,6 +24,14 @@ export default function SatelliteMapScreen({ onLogout, token, user }) {
   const [timestamp, setTimestamp] = useState('');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
+
+  // Satellite detail + ground track
+  const [selectedSat, setSelectedSat] = useState(null);
+  const [satDetail, setSatDetail] = useState(null);
+  const [loadingDetail, setLoadingDetail] = useState(false);
+  const [groundTrack, setGroundTrack] = useState([]);
+  // ref updated synchronously so guard in onSatPress never reads stale value
+  const activeNoradIdRef = useRef(null);
 
   const [mapRegion, setMapRegion] = useState({
     latitude: 13.736717,
@@ -41,6 +51,33 @@ export default function SatelliteMapScreen({ onLogout, token, user }) {
 
   const toggleSwitch = useCallback((key) => {
     setSwitches(prev => ({ ...prev, [key]: !prev[key] }));
+  }, []);
+
+  const onSatPress = useCallback(async (sat) => {
+    if (activeNoradIdRef.current === sat.noradId) return; // same satellite → ignore
+    activeNoradIdRef.current = sat.noradId;               // lock immediately (sync)
+    setSelectedSat(sat);
+    setSatDetail(null);
+    setGroundTrack([]);
+    setLoadingDetail(true);
+    try {
+      const res = await fetch(`${SAT_API_URL}/api/satellite/${sat.noradId}`);
+      const json = await res.json();
+      if (json.success) {
+        setSatDetail(json);
+        if (json.path?.length > 0) {
+          setGroundTrack(json.path.map(p => ({ latitude: p[0], longitude: p[1] })));
+        }
+      }
+    } catch (_) {}
+    setLoadingDetail(false);
+  }, []);
+
+  const closeDetail = useCallback(() => {
+    activeNoradIdRef.current = null;
+    setSelectedSat(null);
+    setSatDetail(null);
+    setGroundTrack([]);
   }, []);
 
   const fetchSatellites = () => {
@@ -142,6 +179,7 @@ export default function SatelliteMapScreen({ onLogout, token, user }) {
     return lines;
   }, [filteredData, switches.distances]);
 
+
   const visibleSats = useMemo(() => {
     return filteredData.filter(sat => {
       if (sat.lat == null || sat.lon == null) return false;
@@ -217,6 +255,7 @@ export default function SatelliteMapScreen({ onLogout, token, user }) {
   );
 
   return (
+    <View style={{ flex: 1 }}>
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent={true} />
       <View style={styles.mapContainer}>
@@ -237,8 +276,18 @@ export default function SatelliteMapScreen({ onLogout, token, user }) {
               sat={sat}
               switches={switches}
               stripColor={STRIP_COLORS[index % STRIP_COLORS.length]}
+              onPress={onSatPress}
             />
           ))}
+          {groundTrack.length > 1 && (
+            <Polyline
+              coordinates={groundTrack}
+              strokeColor="#00d4ff"
+              strokeWidth={2}
+              geodesic={true}
+              lineDashPattern={[6, 3]}
+            />
+          )}
           {switches.distances && distanceLines.map((line) => {
             const midLat = (line.lat1 + line.lat2) / 2;
             let lon1 = line.lon1, lon2 = line.lon2;
@@ -322,11 +371,28 @@ export default function SatelliteMapScreen({ onLogout, token, user }) {
       </Modal>
 
     </SafeAreaView>
+
+    {!!selectedSat && (
+      <SatDetailModal
+        visible={!!selectedSat}
+        sat={selectedSat}
+        detail={satDetail}
+        loading={loadingDetail}
+        onClose={closeDetail}
+      />
+    )}
+
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#ffffff' },
+  detailContainer: {
+    position: 'absolute',
+    bottom: 0, left: 0, right: 0,
+    zIndex: 999,
+  },
   mapContainer: { flex: 1, backgroundColor: '#e2e8f0' },
   map: { ...StyleSheet.absoluteFillObject },
   loadingOverlay: {

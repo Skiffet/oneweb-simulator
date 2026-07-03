@@ -13,7 +13,7 @@ import SatelliteMapScreen from "./screens/SatelliteMapScreen";
 import { API_URL } from "./api";
 
 const IDLE_TIMEOUT_MS = 15 * 60 * 1000;  // 15 นาที
-const WARN_BEFORE_MS = 60 * 1000;         // เตือน 1 นาทีก่อน logout
+const WARN_BEFORE_MS = 2 * 60 * 1000;         // เตือน 1 นาทีก่อน logout
 
 export default function App() {
   const [user, setUser] = useState(null);
